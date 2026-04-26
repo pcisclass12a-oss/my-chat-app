@@ -84,11 +84,12 @@
 <body>
 
   <div id="login">
-    <h2>🔐 Login</h2>
-    <input id="email" placeholder="Email"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-  </div>
+  <h2>🔐 Login or Register</h2>
+  <input id="email" placeholder="Email"><br>
+  <input id="password" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="register()" style="background:#3b82f6;">Register</button>
+</div>
 
   <div id="chatUI" style="display:none;">
     <h2>💬 Private Chat</h2>
@@ -134,12 +135,17 @@
 
     let currentChatId = "";
 
-    function login() {
-      auth.signInWithEmailAndPassword(email.value, password.value)
-        .catch(e => alert(e.message));
-    }
+    function login(){
+  auth.signInWithEmailAndPassword(email.value, password.value)
+  .catch(e=>alert(e.message));
+}
 
-    function logout() { auth.signOut(); }
+function register(){
+  auth.createUserWithEmailAndPassword(email.value, password.value)
+  .catch(e=>alert(e.message));
+}
+
+function logout(){ auth.signOut(); }
 
     auth.onAuthStateChanged(async user => {
       if (user) {
