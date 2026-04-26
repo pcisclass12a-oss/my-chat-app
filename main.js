@@ -15,7 +15,8 @@ import {
   limit, 
   onSnapshot, 
   serverTimestamp,
-  deleteDoc
+  deleteDoc,
+  getDocs
 } from 'firebase/firestore';
 
 // --- DOM Elements ---
@@ -57,6 +58,7 @@ const chatStatusText = document.getElementById('chat-status-text');
 const chatForm = document.getElementById('chat-form');
 const messageInput = document.getElementById('message-input');
 const messagesContainer = document.getElementById('chat-messages');
+const clearChatBtn = document.getElementById('clear-chat-btn');
 
 // App State
 let currentUser = null;
@@ -472,6 +474,28 @@ async function deleteMessage(docId) {
     console.error("Error deleting message: ", error);
   }
 }
+
+clearChatBtn.addEventListener('click', async () => {
+  if (!confirm("Are you sure you want to completely clear this chat for EVERYONE? This cannot be undone.")) return;
+  
+  clearChatBtn.disabled = true;
+  try {
+    const q = query(collection(db, 'chats', currentRoom, 'messages'));
+    const snapshot = await getDocs(q);
+    
+    const deletePromises = [];
+    snapshot.forEach((docSnap) => {
+      deletePromises.push(deleteDoc(doc(db, 'chats', currentRoom, 'messages', docSnap.id)));
+    });
+    
+    await Promise.all(deletePromises);
+  } catch (err) {
+    console.error("Error clearing chat: ", err);
+    alert("Failed to clear chat.");
+  } finally {
+    clearChatBtn.disabled = false;
+  }
+});
 
 // --- Utils ---
 function showScreen(screen) {
