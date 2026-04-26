@@ -99,6 +99,7 @@ let unsubscribeGroups = null;
 let userDocUnsubscribe = null;
 let lastSeenInterval = null;
 let initialLoad = true;
+let activeGroupData = null; // Cache group data for admin checks
 const onlineThresholdMs = 5 * 60 * 1000; 
 const SUPER_ADMIN_EMAIL = "pcisclass.12a@gmail.com";
 
@@ -110,6 +111,11 @@ const getRoomId = (uid1, uid2) => [uid1, uid2].sort().join('_');
 const isOnline = (lastSeenTimestamp) => {
   if (!lastSeenTimestamp) return false;
   return (Date.now() - lastSeenTimestamp.toDate().getTime()) < onlineThresholdMs;
+};
+const isUserAdmin = (gData) => {
+  if (!gData || !currentUser) return false;
+  if (currentUser.email === SUPER_ADMIN_EMAIL) return true;
+  return gData.admins.includes(currentUser.uid);
 };
 
 // --- Auth State Listener ---
@@ -336,6 +342,7 @@ function switchRoom(roomId, roomName, type, activeElement = null, targetLastSeen
   currentRoomType = type;
   currentChatName = roomName;
   initialLoad = true;
+  activeGroupData = null;
   
   chatTitle.textContent = roomName;
   
@@ -355,7 +362,6 @@ function switchRoom(roomId, roomName, type, activeElement = null, targetLastSeen
   } else if (type === 'group') {
     chatHeaderIcon.textContent = '👥';
     chatStatusText.classList.add('hidden');
-    // We will check admin status later to show/hide clear button
     clearChatBtn.classList.add('hidden'); 
   }
   
@@ -364,16 +370,20 @@ function switchRoom(roomId, roomName, type, activeElement = null, targetLastSeen
   if (type === 'global') globalChatBtn.classList.add('active');
   else if (activeElement) activeElement.classList.add('active');
   
-  subscribeToMessages();
   messageInput.focus();
   
-  // If group, fetch doc to check if user is admin
   if (type === 'group') {
     getDoc(doc(db, 'groups', roomId)).then(docSnap => {
-      if (docSnap.exists() && docSnap.data().admins.includes(currentUser.uid)) {
-        clearChatBtn.classList.remove('hidden');
+      if (docSnap.exists()) {
+        activeGroupData = docSnap.data();
+        if (isUserAdmin(activeGroupData)) {
+          clearChatBtn.classList.remove('hidden');
+        }
       }
+      subscribeToMessages();
     });
+  } else {
+    subscribeToMessages();
   }
 }
 
@@ -448,7 +458,7 @@ chatHeaderInfo.addEventListener('click', async () => {
   if (!groupDoc.exists()) return hideScreen(groupInfoModal);
   
   const gData = groupDoc.data();
-  const isAdmin = gData.admins.includes(currentUser.uid);
+  const isAdmin = isUserAdmin(gData);
   
   groupInfoMembersList.innerHTML = '';
   
@@ -464,6 +474,26 @@ chatHeaderInfo.addEventListener('click', async () => {
     div.appendChild(name);
     
     if (isAdmin && uid !== currentUser.uid) {
+      const btnContainer = document.createElement('div');
+      
+      const isTargetAdmin = gData.admins.includes(uid);
+      const adminToggleBtn = document.createElement('button');
+      adminToggleBtn.className = `btn secondary small ${isTargetAdmin ? 'danger-text' : ''}`;
+      adminToggleBtn.textContent = isTargetAdmin ? 'Demote' : 'Make Admin';
+      adminToggleBtn.style.padding = '2px 6px';
+      adminToggleBtn.style.marginRight = '5px';
+      adminToggleBtn.onclick = async () => {
+        if (isTargetAdmin) {
+          if(!confirm(`Remove Admin privileges from ${name.textContent}?`)) return;
+          await updateDoc(doc(db, 'groups', currentRoom), { admins: arrayRemove(uid) });
+        } else {
+          if(!confirm(`Make ${name.textContent} an Admin?`)) return;
+          await updateDoc(doc(db, 'groups', currentRoom), { admins: arrayUnion(uid) });
+        }
+        hideScreen(groupInfoModal);
+      };
+      btnContainer.appendChild(adminToggleBtn);
+      
       const rmBtn = document.createElement('button');
       rmBtn.className = 'btn secondary small danger-text';
       rmBtn.textContent = 'Remove';
@@ -473,7 +503,9 @@ chatHeaderInfo.addEventListener('click', async () => {
         await updateDoc(doc(db, 'groups', currentRoom), { members: arrayRemove(uid) });
         hideScreen(groupInfoModal); // close to force refresh next time
       };
-      div.appendChild(rmBtn);
+      btnContainer.appendChild(rmBtn);
+      
+      div.appendChild(btnContainer);
     }
     groupInfoMembersList.appendChild(div);
   });
@@ -601,7 +633,9 @@ function renderMessage(docId, data) {
   const displayName = senderName || senderEmail.split('@')[0];
   info.textContent = isSent ? timeString : `${displayName} • ${timeString}`;
   
-  if (isSent) {
+  const isAdminDelete = currentRoomType === 'group' && isUserAdmin(activeGroupData);
+  
+  if (isSent || isAdminDelete || currentUser.email === SUPER_ADMIN_EMAIL) {
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-msg-btn';
     deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>`;
