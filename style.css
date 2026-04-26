@@ -475,6 +475,12 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
+.message-wrapper .avatar-small {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
