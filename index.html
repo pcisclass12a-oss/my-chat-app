@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Real-time Chat with DMs</title>
+    <title>Real-time Chat with DMs & Groups</title>
     <link rel="stylesheet" href="./style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +37,15 @@
         </div>
       </div>
 
+      <!-- Banned Screen -->
+      <div id="banned-screen" class="screen hidden">
+        <div class="glass-panel" style="border-color: rgba(239, 68, 68, 0.3);">
+          <h1 style="color: var(--danger-color);">Account Banned</h1>
+          <p>Your account has been suspended by the Administrator.</p>
+          <button id="banned-logout-btn" class="btn secondary">Back to Login</button>
+        </div>
+      </div>
+
       <!-- Profile Settings Modal -->
       <div id="profile-modal" class="modal hidden">
         <div class="glass-panel">
@@ -56,6 +65,60 @@
               <button type="submit" id="save-profile-btn" class="btn primary">Save Changes</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Create Group Modal -->
+      <div id="create-group-modal" class="modal hidden">
+        <div class="glass-panel" style="max-height: 80vh; display: flex; flex-direction: column;">
+          <h2>Create New Group</h2>
+          <form id="create-group-form" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            <div class="input-group">
+              <label for="group-name">Group Name</label>
+              <input type="text" id="group-name" required placeholder="e.g. Study Group" />
+            </div>
+            <div class="input-group" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+              <label>Select Members</label>
+              <div id="create-group-user-list" class="checklist-container">
+                <!-- User checkboxes injected here -->
+              </div>
+            </div>
+            <div class="btn-group" style="flex-direction: row; justify-content: flex-end; margin-top: 20px;">
+              <button type="button" id="close-create-group-btn" class="btn secondary">Cancel</button>
+              <button type="submit" id="save-group-btn" class="btn primary">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Group Info Modal -->
+      <div id="group-info-modal" class="modal hidden">
+        <div class="glass-panel" style="max-height: 80vh; display: flex; flex-direction: column;">
+          <h2 id="info-modal-group-name">Group Info</h2>
+          <div class="input-group" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="margin: 0;">Members</label>
+              <button type="button" id="add-member-btn" class="btn secondary small hidden">+ Add</button>
+            </div>
+            <div id="group-info-members-list" class="checklist-container">
+              <!-- Group members injected here -->
+            </div>
+          </div>
+          
+          <div id="add-member-section" class="hidden" style="margin-top: 10px; border-top: 1px solid var(--glass-border); padding-top: 10px;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary);">Add new member:</label>
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <select id="new-member-select" style="flex: 1; padding: 8px; border-radius: 8px; background: rgba(15,23,42,0.6); color: white; border: 1px solid var(--glass-border);">
+                <!-- Non-members injected here -->
+              </select>
+              <button type="button" id="confirm-add-member-btn" class="btn primary small">Add</button>
+            </div>
+          </div>
+
+          <div class="btn-group" style="flex-direction: row; justify-content: space-between; margin-top: 20px;">
+            <button type="button" id="leave-group-btn" class="btn secondary danger-text">Leave Group</button>
+            <button type="button" id="close-group-info-btn" class="btn secondary">Close</button>
+          </div>
         </div>
       </div>
 
@@ -89,7 +152,17 @@
               <span class="channel-icon">#</span> Global Chat
             </button>
             
-            <div class="users-section">
+            <div class="users-section" style="margin-top: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Groups</h3>
+                <button id="open-create-group-btn" class="btn secondary small" style="padding: 2px 6px; font-size: 1rem;">+</button>
+              </div>
+              <div id="groups-list" class="users-list">
+                <!-- Group items injected here -->
+              </div>
+            </div>
+
+            <div class="users-section" style="margin-top: 10px;">
               <h3>Direct Messages</h3>
               <div id="users-list" class="users-list">
                 <!-- User items injected here -->
@@ -101,7 +174,7 @@
         <!-- Main Chat Area -->
         <main class="chat-area">
           <header class="chat-header">
-            <div class="chat-title-container">
+            <div class="chat-title-container" id="chat-header-info" style="cursor: pointer;" title="View Info">
               <span id="chat-header-icon" class="channel-icon">#</span>
               <h2 id="chat-title">Global Chat</h2>
               <span id="chat-status-text" class="status-text hidden">Online</span>

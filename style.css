@@ -95,8 +95,8 @@ body {
   max-width: 450px;
 }
 
-/* --- Login Screen --- */
-#login-screen {
+/* --- Login & Banned Screens --- */
+#login-screen, #banned-screen {
   justify-content: center;
   align-items: center;
   padding: 20px;
@@ -629,4 +629,31 @@ body {
   .chat-area {
     height: 60%;
   }
+}
+
+.checklist-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 200px;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.danger-text {
+  color: var(--danger-color) !important;
+}
+
+.danger-text:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
 }
